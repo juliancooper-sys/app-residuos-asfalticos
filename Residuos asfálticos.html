@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Residuos asfálticos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<style>
+  :root{
+    --asfalto:#14120f; --bitumen:#1e1a15; --capa:#2a251e; --borde:#3a332a;
+    --vial:#f5b301; --verde:#5fc47f; --rojo:#ef6a5a; --texto:#f3efe6; --suave:#b5ab9a;
+    color-scheme:dark; box-sizing:border-box; padding-top:env(safe-area-inset-top,0px);
+  }
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  html,body{background:var(--asfalto);}
+  body{font-family:"Barlow",system-ui,sans-serif;color:var(--texto);padding-bottom:6.5rem;
+    background-image:radial-gradient(circle at 20% 0%,rgba(245,179,1,.07),transparent 40%),radial-gradient(circle at 90% 30%,rgba(95,196,127,.05),transparent 35%);}
+  h1,h2,h3,.fx{font-family:"Barlow Condensed",system-ui,sans-serif;letter-spacing:.01em;}
+  .panel{background:linear-gradient(180deg,var(--bitumen),#191611);border:1px solid var(--borde);border-radius:1.25rem;}
+  .ruta{background:#0e0d0b;border-top:1px solid var(--borde);border-bottom:1px solid var(--borde);position:relative;height:34px;}
+  .ruta::after{content:"";position:absolute;left:0;right:0;top:50%;height:4px;transform:translateY(-50%);
+    background:repeating-linear-gradient(90deg,var(--vial) 0 34px,transparent 34px 68px);border-radius:2px;}
+  .grano-r{background-color:#2f8f52;background-image:radial-gradient(rgba(255,255,255,.28) 1.5px,transparent 2px),radial-gradient(rgba(0,0,0,.25) 1.5px,transparent 2px);background-size:11px 11px,7px 7px;background-position:0 0,3px 4px;}
+  .grano-n{background-color:#0f0d0a;background-image:radial-gradient(rgba(245,179,1,.35) 1.5px,transparent 2px),radial-gradient(rgba(255,255,255,.08) 1.5px,transparent 2px);background-size:9px 9px,6px 6px;background-position:2px 2px,0 3px;}
+  .capa{transition:transform .2s,background .2s,border-color .2s;}
+  .capa:hover{transform:translateX(4px);}
+  .gauge{height:12px;border-radius:999px;background:#120f0b;overflow:hidden;border:1px solid var(--borde);}
+  .gauge>div{height:100%;width:0;border-radius:999px;transition:width .9s cubic-bezier(.2,.8,.2,1);}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:10px;border-radius:999px;background:#120f0b;border:1px solid var(--borde);outline:none;margin-top:.75rem;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;background:var(--thumb,var(--vial));border:4px solid var(--asfalto);box-shadow:0 0 0 2px var(--thumb,var(--vial));cursor:grab;}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--thumb,var(--vial));border:4px solid var(--asfalto);box-shadow:0 0 0 2px var(--thumb,var(--vial));cursor:grab;}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(245,179,1,.5);}
+  button:focus-visible{outline:3px solid rgba(245,179,1,.6);outline-offset:2px;}
+  .cta{background:linear-gradient(180deg,#ffc933,var(--vial));color:#1a1405;box-shadow:0 6px 0 #a87700,0 14px 30px rgba(245,179,1,.2);transition:transform .1s,box-shadow .1s;}
+  .cta:active{transform:translateY(5px);box-shadow:0 1px 0 #a87700;}
+  @keyframes aparece{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  .aparece{animation:aparece .45s ease both;}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<nav class="fixed bottom-0 inset-x-0 z-20 flex justify-center px-3 pb-3" style="padding-bottom:calc(.75rem + env(safe-area-inset-bottom,0px))">
+  <div class="flex gap-1 p-1.5 rounded-full border" style="background:rgba(30,26,21,.92);border-color:var(--borde);backdrop-filter:blur(10px);width:min(420px,100%)">
+    <button id="nav-residuos" class="flex-1 rounded-full py-3 fx text-lg font-bold"></button>
+    <button id="nav-simulador" class="flex-1 rounded-full py-3 fx text-lg font-bold"></button>
+  </div>
+</nav>
+
+<script>
+const TIPOS = [
+  {id:"rutas", icon:"🚧", corto:"Removido de rutas", nombre:"Asfalto removido de rutas", origen:"Reparación de calles y carreteras viejas", ejemplo:"Trozos de pavimento levantado y material fresado", destino:"Reciclado en caliente o en frío, bases y subbases", riesgo:0, desc:"Es el residuo más abundante y valioso: conserva el bitumen y los áridos, por lo que se tritura, se clasifica y se mezcla con asfalto nuevo."},
+  {id:"industrial", icon:"🏭", corto:"Industriales", nombre:"Residuos industriales", origen:"Sobras de plantas asfaltadoras y fábricas", ejemplo:"Mezcla fuera de especificación, restos de producción", destino:"Se reincorpora a nuevas mezclas en la misma planta", riesgo:0, desc:"Se generan durante la producción. Como su composición es conocida y controlada, es fácil volver a usarlos en el mismo proceso."},
+  {id:"contaminado", icon:"🛢️", corto:"Material contaminado", nombre:"Material contaminado", origen:"Asfalto mezclado con tierra, combustibles, aceites o químicos", ejemplo:"Pavimento de talleres, estaciones de servicio o derrames", destino:"Tratamiento especial antes de reutilizar o disponer", riesgo:2, desc:"Es el más problemático: sus hidrocarburos pueden contaminar suelo y agua. Nunca debe quemarse, porque libera humo tóxico."},
+  {id:"envases", icon:"🥫", corto:"Envases e impermeabilizantes", nombre:"Envases y restos de impermeabilizantes", origen:"Obras de construcción e impermeabilización de techos", ejemplo:"Latas, membranas y materiales usados", destino:"Recolección diferenciada y disposición controlada", riesgo:1, desc:"Conservan restos de bitumen difíciles de degradar. Se separan del resto de los residuos de obra para evitar que contaminen."}
+];
+const NIVEL = ["Bajo","Medio","Alto"];
+const NCOL = ["var(--verde)","var(--vial)","var(--rojo)"];
+const PASOS = [
+  ["Retiro","El pavimento viejo se levanta por fresado o demolición."],
+  ["Trituración","Se tritura y clasifica para eliminar impurezas."],
+  ["Mezcla","Se combina con asfalto nuevo o con rejuvenecedores."],
+  ["Pavimento nuevo","El material recuperado vuelve a la calle."]
+];
+const EPP = ["🧤 Guantes","🥽 Gafas","😷 Mascarilla","🦺 Ropa de protección"];
+
+let state = {pantalla:"residuos", sel:"rutas", reciclado:30, resultado:null};
+
+function evaluar(r){
+  const ahorro = Math.min(98, Math.round(r*1.1+5));
+  const ambiente = Math.min(98, Math.round(r*1.3+8));
+  if (r < 15) return {tono:"warn", icon:"⚠️", titulo:"Bajo aprovechamiento", texto:"Casi todo el material es nuevo. El pavimento será resistente, pero se desperdicia la oportunidad de ahorrar y reducir residuos.", ahorro, ambiente, riesgo:0, usado:r};
+  if (r <= 40) return {tono:"ok", icon:"✅", titulo:"¡Excelente mezcla!", texto:"Buen equilibrio entre ahorro y calidad: el asfalto reciclado conserva el bitumen y el pavimento mantiene sus propiedades.", ahorro, ambiente, riesgo:0, usado:r};
+  if (r <= 65) return {tono:"warn", icon:"⚠️", titulo:"Mezcla exigente", texto:"Con tanto material viejo el bitumen está envejecido. Hace falta agregar rejuvenecedores y controlar muy bien la calidad.", ahorro, ambiente, riesgo:1, usado:r};
+  return {tono:"bad", icon:"🚨", titulo:"Riesgo de pavimento frágil", texto:"Demasiado material envejecido y rígido: el pavimento puede agrietarse pronto y exigir reparaciones costosas.", ahorro, ambiente, riesgo:2, usado:r};
+}
+
+function riesgoMedidor(n){
+  return `<div class="flex gap-1.5">${[0,1,2].map(i=>`<div class="h-2 flex-1 rounded-full" style="background:${i<=n?NCOL[n]:"#120f0b"};border:1px solid var(--borde)"></div>`).join("")}</div>`;
+}
+
+function vistaResiduos(){
+  const t = TIPOS.find(x=>x.id===state.sel);
+  const capas = TIPOS.map((x,i)=>{
+    const act = x.id===state.sel;
+    return `<button data-sel="${x.id}" class="capa w-full flex items-center gap-4 text-left px-4 py-4 rounded-2xl border"
+      style="background:${act?"linear-gradient(90deg,rgba(245,179,1,.22),rgba(245,179,1,.06))":"var(--capa)"};border-color:${act?"var(--vial)":"var(--borde)"};margin-left:${i*6}px">
+      <span class="grid place-items-center w-12 h-12 rounded-xl text-2xl shrink-0" style="background:${act?"var(--vial)":"#17130e"}">${x.icon}</span>
+      <span class="fx text-xl font-bold leading-tight" style="color:${act?"var(--vial)":"var(--texto)"}">${x.corto}</span>
+    </button>`;
+  }).join("");
+  return `
+  <header class="aparece">
+    <div class="max-w-5xl mx-auto px-5 pt-8">
+      <h1 class="text-5xl md:text-7xl font-extrabold leading-[.95]">Residuos<br><span style="color:var(--vial)">asfálticos</span></h1>
+      <p class="mt-4 max-w-xl text-lg" style="color:var(--suave)">Lo que sobra cuando se fabrica, repara o remueve el asfalto de calles y rutas, y cómo volver a usarlo.</p>
+    </div>
+    <div class="ruta mt-7"></div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-5 mt-8">
+    <section class="panel p-5 md:p-6">
+      <h2 class="text-3xl font-bold">¿Qué es el bitumen?</h2>
+      <p class="mt-2" style="color:var(--suave)">Es una sustancia negra, viscosa y pegajosa que queda como el residuo más pesado cuando se refina el petróleo crudo.</p>
+      <div class="flex flex-wrap gap-2 mt-4">${["Impermeable al agua","Muy adherente","Resistente al desgaste","Se ablanda con el calor"].map(c=>`<span class="px-3 py-1.5 rounded-full text-sm font-medium" style="background:#120f0b;border:1px solid var(--borde)">${c}</span>`).join("")}</div>
+    </section>
+
+    <h2 class="text-3xl font-bold mt-10">Tipos de residuo</h2>
+    <p class="mt-1" style="color:var(--suave)">Tocá una capa para ver su detalle.</p>
+    <div class="mt-4 grid md:grid-cols-5 gap-5">
+      <div class="md:col-span-2 space-y-3 self-start">${capas}</div>
+      <article class="md:col-span-3 panel p-6 aparece" key="${t.id}" style="border-color:rgba(245,179,1,.45)">
+        <div class="flex items-center gap-4">
+          <span class="grid place-items-center w-16 h-16 rounded-2xl text-4xl" style="background:var(--vial)">${t.icon}</span>
+          <h3 class="text-3xl font-bold leading-tight">${t.nombre}</h3>
+        </div>
+        <p class="mt-5 text-lg leading-relaxed">${t.desc}</p>
+        <dl class="mt-5 grid sm:grid-cols-2 gap-4 text-[15px]">
+          <div class="rounded-xl p-3" style="background:#120f0b"><dt style="color:var(--suave)">Origen</dt><dd class="mt-1">${t.origen}</dd></div>
+          <div class="rounded-xl p-3" style="background:#120f0b"><dt style="color:var(--suave)">Ejemplo</dt><dd class="mt-1">${t.ejemplo}</dd></div>
+          <div class="rounded-xl p-3 sm:col-span-2" style="background:#120f0b"><dt style="color:var(--suave)">Destino</dt><dd class="mt-1">${t.destino}</dd></div>
+        </dl>
+        <div class="mt-5">
+          <div class="flex justify-between font-semibold"><span>Riesgo ambiental</span><span style="color:${NCOL[t.riesgo]}">${NIVEL[t.riesgo]}</span></div>
+          <div class="mt-2">${riesgoMedidor(t.riesgo)}</div>
+        </div>
+      </article>
+    </div>
+
+    <h2 class="text-3xl font-bold mt-12">Del pavimento viejo al nuevo</h2>
+    <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      ${PASOS.map((p,i)=>`<div class="panel p-5"><div class="fx text-5xl font-extrabold" style="color:var(--vial)">${i+1}</div><h3 class="text-2xl font-bold mt-1">${p[0]}</h3><p class="mt-1 text-[15px]" style="color:var(--suave)">${p[1]}</p></div>`).join("")}
+    </div>
+
+    <section class="panel p-5 md:p-6 mt-10" style="border-color:rgba(95,196,127,.4)">
+      <h2 class="text-3xl font-bold" style="color:var(--verde)">Cuidado con la salud</h2>
+      <p class="mt-2" style="color:var(--suave)">Al cortar, fresar o calentar asfalto se liberan polvo, humos y vapores que irritan ojos, piel y vías respiratorias. El asfalto caliente puede causar quemaduras graves. Conviene trabajar en lugares ventilados y usar:</p>
+      <div class="flex flex-wrap gap-2 mt-4">${EPP.map(e=>`<span class="px-4 py-2 rounded-full font-medium" style="background:rgba(95,196,127,.12);border:1px solid rgba(95,196,127,.35)">${e}</span>`).join("")}</div>
+    </section>
+
+    <button id="ir-sim" class="cta w-full md:w-auto mt-10 px-10 py-5 rounded-2xl fx text-3xl font-extrabold">Probar simulador →</button>
+  </main>`;
+}
+
+function vistaSimulador(){
+  const r = state.reciclado, n = 100-r;
+  let res = "";
+  if (state.resultado){
+    const x = state.resultado;
+    const col = {ok:"var(--verde)", warn:"var(--vial)", bad:"var(--rojo)"}[x.tono];
+    const bg = {ok:"rgba(95,196,127,.12)", warn:"rgba(245,179,1,.12)", bad:"rgba(239,106,90,.14)"}[x.tono];
+    const sc = ["🛡️","🛡️","🚨"][x.riesgo];
+    res = `
+    <div class="mt-8 aparece">
+      <div class="rounded-2xl p-5 flex gap-4 items-start" style="background:${bg};border:1.5px solid ${col}">
+        <span class="text-4xl">${x.icon}</span>
+        <div><h3 class="text-3xl font-bold" style="color:${col}">${x.titulo}</h3><p class="mt-1">${x.texto}</p><p class="mt-2 text-sm" style="color:var(--suave)">Mezcla evaluada: ${x.usado}% reciclado y ${100-x.usado}% nuevo</p></div>
+      </div>
+      <div class="mt-5 grid sm:grid-cols-3 gap-4">
+        <div class="panel p-5"><div class="font-semibold" style="color:var(--vial)">💰 Ahorro económico</div><div class="fx text-6xl font-extrabold mt-2">${x.ahorro}<span class="text-3xl">%</span></div><div class="gauge mt-3"><div data-w="${x.ahorro}" style="background:var(--vial)"></div></div><p class="text-sm mt-3" style="color:var(--suave)">Menos piedra, arena y betún nuevos</p></div>
+        <div class="panel p-5"><div class="font-semibold" style="color:var(--verde)">🌿 Menos impacto</div><div class="fx text-6xl font-extrabold mt-2">${x.ambiente}<span class="text-3xl">%</span></div><div class="gauge mt-3"><div data-w="${x.ambiente}" style="background:var(--verde)"></div></div><p class="text-sm mt-3" style="color:var(--suave)">Menos residuos y emisiones</p></div>
+        <div class="panel p-5"><div class="font-semibold">${sc} Riesgo de calidad</div><div class="fx text-6xl font-extrabold mt-2" style="color:${NCOL[x.riesgo]}">${NIVEL[x.riesgo]}</div><div class="gauge mt-3"><div data-w="${(x.riesgo+1)*33}" style="background:${NCOL[x.riesgo]}"></div></div><p class="text-sm mt-3" style="color:var(--suave)">Fragilidad y agrietamiento</p></div>
+      </div>
+    </div>`;
+  }
+  return `
+  <header class="aparece">
+    <div class="max-w-3xl mx-auto px-5 pt-8">
+      <h1 class="text-5xl md:text-6xl font-extrabold leading-[.95]">Simulador<br><span style="color:var(--verde)">de reciclaje</span></h1>
+      <p class="mt-4 text-lg" style="color:var(--suave)">Decidí cuánto asfalto reciclado (fresado) entra en la nueva mezcla. Los dos valores siempre suman 100%.</p>
+    </div>
+    <div class="ruta mt-7"></div>
+  </header>
+  <main class="max-w-3xl mx-auto px-5 mt-8">
+    <div class="panel p-5">
+      <div class="flex h-20 rounded-xl overflow-hidden border" style="border-color:var(--borde)">
+        <div id="bar-rec" class="grano-r grid place-items-center fx text-3xl font-extrabold transition-all duration-300" style="width:${r}%;color:#fff;text-shadow:0 2px 6px #000">${r>=12?r+"%":""}</div>
+        <div id="bar-nue" class="grano-n grid place-items-center fx text-3xl font-extrabold transition-all duration-300" style="width:${n}%;color:var(--vial);text-shadow:0 2px 6px #000">${n>=12?n+"%":""}</div>
+      </div>
+      <div class="flex justify-between text-sm mt-2" style="color:var(--suave)"><span>Reciclado</span><span>Nuevo</span></div>
+
+      <div class="mt-6 space-y-7">
+        <div><label for="rec" class="flex justify-between items-end"><span class="fx text-2xl font-bold" style="color:var(--verde)">♻️ Asfalto reciclado</span><span id="v-rec" class="fx text-3xl font-extrabold">${r}%</span></label><input id="rec" type="range" min="0" max="100" value="${r}" style="--thumb:var(--verde)"></div>
+        <div><label for="nue" class="flex justify-between items-end"><span class="fx text-2xl font-bold" style="color:var(--vial)">🛣️ Asfalto nuevo</span><span id="v-nue" class="fx text-3xl font-extrabold">${n}%</span></label><input id="nue" type="range" min="0" max="100" value="${n}" style="--thumb:var(--vial)"></div>
+      </div>
+    </div>
+    <button id="reciclar" class="cta w-full mt-7 py-6 rounded-2xl fx text-4xl font-extrabold">RECICLAR</button>
+    <div id="resultado">${res}</div>
+  </main>`;
+}
+
+function animarGauges(){
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    document.querySelectorAll(".gauge>div[data-w]").forEach(g=>g.style.width=g.dataset.w+"%");
+  }));
+}
+
+function actualizarSliders(){
+  const r = state.reciclado, n = 100-r;
+  document.getElementById("rec").value = r;
+  document.getElementById("nue").value = n;
+  document.getElementById("v-rec").textContent = r+"%";
+  document.getElementById("v-nue").textContent = n+"%";
+  const br = document.getElementById("bar-rec"), bn = document.getElementById("bar-nue");
+  br.style.width = r+"%"; br.textContent = r>=12 ? r+"%" : "";
+  bn.style.width = n+"%"; bn.textContent = n>=12 ? n+"%" : "";
+  document.getElementById("resultado").innerHTML = "";
+  state.resultado = null;
+}
+
+function render(){
+  document.getElementById("app").innerHTML = state.pantalla==="residuos" ? vistaResiduos() : vistaSimulador();
+  const base = "flex-1 rounded-full py-3 fx text-xl font-bold transition-colors ";
+  const nr = document.getElementById("nav-residuos"), ns = document.getElementById("nav-simulador");
+  nr.textContent = "🧱 Residuos"; ns.textContent = "♻️ Simulador";
+  const on = "background:var(--vial);color:#1a1405", off = "background:transparent;color:var(--suave)";
+  nr.className = base; ns.className = base;
+  nr.setAttribute("style", state.pantalla==="residuos"?on:off);
+  ns.setAttribute("style", state.pantalla==="simulador"?on:off);
+  const app = document.getElementById("app");
+  if (state.pantalla==="residuos"){
+    app.querySelectorAll("[data-sel]").forEach(b=>b.addEventListener("click",()=>{state.sel=b.dataset.sel;const y=window.scrollY;render();window.scrollTo(0,y);}));
+    document.getElementById("ir-sim").addEventListener("click",()=>{state.pantalla="simulador";render();window.scrollTo(0,0);});
+  } else {
+    document.getElementById("rec").addEventListener("input",e=>{state.reciclado=Number(e.target.value);actualizarSliders();});
+    document.getElementById("nue").addEventListener("input",e=>{state.reciclado=100-Number(e.target.value);actualizarSliders();});
+    document.getElementById("reciclar").addEventListener("click",()=>{state.resultado=evaluar(state.reciclado);render();animarGauges();
+      document.getElementById("resultado").scrollIntoView({behavior:"smooth",block:"start"});});
+  }
+}
+document.getElementById("nav-residuos").addEventListener("click",()=>{state.pantalla="residuos";render();window.scrollTo(0,0);});
+document.getElementById("nav-simulador").addEventListener("click",()=>{state.pantalla="simulador";render();window.scrollTo(0,0);});
+render();
+</script>
+</body>
+</html>
